@@ -57,7 +57,8 @@ var committees={
         name:"App design ",
         description:"ya know App design",
         contactEmail:"jtwalder@gmail.com",
-        picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg"
+        picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg",
+        members:{key1:{name:"Bobson Dougnut",desc:"some description",picURL:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg"}}
       },
 
 
@@ -96,6 +97,10 @@ app.get('/GetCommittees', (req, res) => {
   app.get('/Hello/:name', (req, res) => {
     
         res.send("Hello "+req.params.name);
+      });
+      app.get('/GetCommitteeMember', (req, res) => {
+        
+          res.json(committees.committees[2].members.key1);
       });
 const port = 5000;
 
