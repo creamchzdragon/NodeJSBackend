@@ -114,6 +114,11 @@ class DbModel{
             throw DOMException("Field Doesn't Exist: "+fieldName);
         }
     }
+    /**
+     * retrieves a row and return corresponding JSON
+     * @param {int} id the id of the object you want to retrieve 
+     * @param {function} func callback function after the row has been retrieved
+     */
     getJSONById(id,func){
         this.getQuery("SELECT * FROM "+this.tableName+" WHERE "+this.idField+" = "+id+" ;",
         function (result) {
