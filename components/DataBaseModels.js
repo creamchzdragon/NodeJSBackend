@@ -10,13 +10,19 @@ class DbModel{
         this.tableName=null;
         this.idField=null;
         this.fields=[];
-        this.createJSONFromFields();
+        this.values={};
     
     }
-    createJSONFromFields(){
+    createJSONFromFields(vals){
         var values={};
+        if(vals!=null&&this.idField!=null&&vals[this.idField]!=undefined){
+            values[this.idField]=vals[this.idField];
+       }
         for (var field in this.fields){
-            values[field]=null
+            if(vals!=null&&vals[this.fields[field]]!=undefined)
+                values[this.fields[field]]=vals[this.fields[field]];
+            else
+            values[this.fields[field]]=null;
         }
         this.values=values;
     }
@@ -27,14 +33,40 @@ class DbModel{
      */
     getSingleByID(id,func){
         this.getQuery("SELECT * FROM "+this.tableName+" WHERE "+this.idField+" = "+id+" ;",
-        function (err, result) {
-            if (err) throw err;
-                console.log("Result: " + result);
-                func(this);
+        function (result) {
+            console.log("Result: " + result[0].firstname);
+            var obj=new DbModel();
+            for(var field in result[0]){
+                obj.values[field]=result[0][field];
+            }
+                if(func !=undefined)
+                    func(obj);
           });
     }
-    getList(field,condition,orderby,orderMethod,func){
-        throw DOMException("not implmented yet");
+
+    getList(conditions,orderby,func){
+        var fieldConditions=[];
+        for(var c in conditions){
+            if(typeof conditions[c] =="string")
+                fieldConditions.push(c+"="+"\""+conditions[c]+"\"");
+            else
+                fieldConditions.push(c+"="+conditions[c]);
+        }
+        var where=fieldConditions.length==0?"":" WHERE "+fieldConditions.join(" AND ");
+        var sql="SELECT * FROM "+this.tableName+where+" ORDER BY "+orderby.join(" , ")+";";
+        this.getQuery(sql,(result)=>{
+            var objs=[];
+            for(var i in result){
+                var obj=new DbModel();
+                for(var field in result[i]){
+                    obj.values[field]=result[i][field];
+                }
+                objs.push(obj);
+            }
+            if(func != undefined)
+                func(objs);
+        });
+
     }
     /**
      * 
@@ -44,6 +76,7 @@ class DbModel{
      * @param {Function} func the callback function, it is passed a list of @this
      */
     getListByFields(fields,orderby,orderMethod,func){
+        throw DOMException("not finsihed");
         for(var field in fields){
             if(!this.fields.includes(field)) 
             throw DOMException("Field Doesn't Exist: "+field);
@@ -54,8 +87,7 @@ class DbModel{
         }
         eqStr=eqStr.substring(0,eqStr.length-1);
         this.getQuery("SELECT * FROM "+this.tableName+" WHERE "+eq+" "+" ORDER BY "+orderby.join(",")+";",
-        function (err, result) {
-           if (err) throw err;
+        function (result) {
                 console.log("Result: " + result);
                 var objects=[];//TODO init me
                 func(objects);
@@ -72,10 +104,9 @@ class DbModel{
     getFieldById(id,fieldName,func){
         if(this.fields.includes(fieldName)){
             this.getQuery("SELECT "+fieldName+" FROM "+this.tableName+" WHERE "+this.idField+" = "+id+" ;",
-            function (err, result) {
-                if (err) throw err;
+            function (result) {
                     console.log("Result: " + result);
-                    var field=null;//TODO init me
+                    var field=result[0];
                     func(field);
             });
         }
@@ -92,6 +123,7 @@ class DbModel{
      * @param {function} func callback function when call is complete,function is passed result
      */
     getQuery(sql,func){
+        console.log(sql);
         con.query(sql, function(err,result){
             if(err) throw err;
             func(result);
@@ -107,36 +139,52 @@ class DbModel{
      * @param {function} func callback function after the object as been saved
      */
     saveToDb(func){
-        var tableString="";
-        var tableValues="";
-        for(var i=0;i<this.fields.length;i++){
-            if(i==this.fields.length-1){
-                tableString+=this.fields[i];
-                tableValues+=this.values[this.fields[i]];
+        var tableString=[];
+        var tableValues=[];
+        for(var v in this.values){
+            tableString.push(v);
+            if(this.values[v]!=undefined){
+                if(typeof this.values[v]=="string")
+                    tableValues.push("\""+this.values[v]+"\"");
+                else
+                tableValues.push(this.values[v]);
             }
-            else{
-                tableString+=this.fields[i]+", ";
-                tableValues+=this.values[this.fields[i]]+", ";
-            }
-
+            else
+                tableValues.push("NULL");
         }
-        this.getQuery("INSERT INTO "+this.tableName+" ( "+tableString+" ) VALUES "+tableValues+" ;",
-        function (err, result) {
-            if (err) throw err;
+        if(this.values[this.idField]!=undefined){
+            var updatestr=[];
+            for(var v in this.values){
+                if(this.values[v]!=undefined){
+                    if(typeof this.values[v]=="string")
+                        updatestr.push(v+"=\""+this.values[v]+"\"");
+                    else
+                    updatestr.push(v+"="+this.values[v]);
+                }
+            }
+           var sql= "UPDATE "+this.tableName+" SET "+updatestr.join(",")+" WHERE "+this.idField+" = "+this.values[this.idField]+" ;";
+        }
+        else{
+            var sql="INSERT INTO "+this.tableName+" ( "+tableString.join(",")+" ) VALUES ("+tableValues.join(",")+") ;";
+        }
+        this.getQuery(sql,
+        function (result) {
                 console.log("Result: " + result);
-                func();
+                if(func!=undefined)
+                    func();
           });
     }
 }
 
 class Member extends DbModel{
-    constructor(){
+    constructor(vals){
         super();
-        this.tableName="person";
-        this.idField="memberId";
-        this.fields=["firstName","lastName","email","phoneNumber","slackUsername","githubUsername","googleUid",
+        this.tableName="member";
+        this.idField="memberid";
+        this.fields=["firstname","lastname","email","phoneNumber","slackUsername","githubUsername","googleUid",
             "pictureUrl","bannerId","canPostAnnouncements"];
-            super.createJSONFromFields();
+            super.createJSONFromFields(vals);
+        
     }
 }
 class Committee extends DbModel{
@@ -166,6 +214,16 @@ class Announcement extends DbModel{
         createJSONFromFields();
     }
 }
-var me=new Member();
-me.values={firstName:"jamie",lastName:"walder"};
-me.saveToDb();
+//var me=new Member({firstname:"jamie",lastname:"walder",email:"walderj5@students.rowan.edu",phoneNumber:"856-500-0106",canPostAnnouncements:true});
+//me.saveToDb();
+/*var me=new Member().getSingleByID(18,function(member){
+    console.log(member.values.firstname);
+}
+);*/
+var me=new Member().getList({firstname:"jamie"},["firstname"],(res)=>{
+    for(var i in res){
+        console.log(res[i].values);
+        res[i].values.firstname="tyler";
+        new Member(res[i].values).saveToDb();
+    }
+});
