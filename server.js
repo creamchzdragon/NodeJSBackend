@@ -1,107 +1,41 @@
 const express = require('express');
 const path = require("path");
 var fs = require('fs');
-var announcments={
-  announcments:
-  [
-    {
-      key:1,
-      title:"Test Announcment 1",
-      announcmentText:"this is a test announcment",
-      picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg",
-      committee:"General",
-      timeStamp:Date.now()
-    },
-    {
-      key:2,
-      title:"Test Announcment 2",
-      announcmentText:"this is a test announcment",
-      picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg",
-      committee:"General",
-      timeStamp:Date.now()-1000
-    },
-    {
-      key:3,
-      title:"Test Announcment 3",
-      announcmentText:"this is a test announcment",
-      picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg",
-      committee:"General",
-      timeStamp:Date.now()-10000
-    },
-    {
-      key:4,
-      title:"Test Announcment 4",
-      announcmentText:"this is a test announcment",
-      picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg",
-      committee:"General",
-      timeStamp:Date.now()-100000
-    },
-
-  ]
-}
-var committees={
-    committees:[
-      {
-        name:"Animation and Game Design ",
-        description:"ya know game design",
-        contactEmail:"jtwalder@gmail.com",
-        picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg"
-      },
-      {
-        name:"AI ",
-        description:"ya know AI design",
-        contactEmail:"jtwalder@gmail.com",
-        picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg"
-      },
-      {
-        name:"App design ",
-        description:"ya know App design",
-        contactEmail:"jtwalder@gmail.com",
-        picture:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg",
-        members:{key1:{name:"Bobson Dougnut",desc:"some description",picURL:"https://espnfivethirtyeight.files.wordpress.com/2014/04/bob-ross.jpg"}}
-      },
-
-
-    ]
-}
-
+var dbModels=require('./components/DataBaseModels');
 
 
 const app = express();
 
-app.get('/GetAnnouncment/:id', (req, res) => {
-    var found=false;
-    for(announcment in announcments.announcments){
-      console.log(announcments.announcments[announcment].key+"==="+req.params.id);
-      
-      if(announcments.announcments[announcment].key==req.params.id){
-        res.json(announcments.announcments[announcment]);
-        found=true;
-        break;
-      }
-    }
-    if(!found){
-      res.json({message:"announcement not found, fucking panic!!"});
-    }
-
+app.get('/GetAnnouncement/:id', (req, res) => {
+    var a=new dbModels.AnnouncementV();
+    a.getJSONById(req.params.id,(announcment)=>{
+      res.json(announcment);
+    });
 });
-app.get('/GetAnnouncments', (req, res) => {
-
-    res.json(announcments.announcments);
-
+app.get('/GetAnnouncements', (req, res) => {
+  var a=new dbModels.AnnouncementV();
+  a.getJSONList({},["postedDate"],(result)=>{
+    res.json(result)
+  });
 });
 app.get('/GetCommittees', (req, res) => {
-
-    res.json(committees.committees);
+  var c=new dbModels.CommitteeV();
+  c.getJSONList({},['name'],(l)=>{
+      res.json(l);
   });
-  app.get('/Hello/:name', (req, res) => {
+});
+app.get('/Hello/:name', (req, res) => {
     
-        res.send("Hello "+req.params.name);
-      });
-      app.get('/GetCommitteeMember', (req, res) => {
-        
-          res.json(committees.committees[2].members.key1);
-      });
-const port = 5000;
+  res.send("Hello "+req.params.name);
+});
+
+app.get('/GetCommitteeMembers/:committeeName', (req, res) => {
+        var m=new dbModels.MemberV();
+        m.getJSONList({committeeName:req.params.committeeName},["lastname"],(l)=>{
+          res.json(l);
+        });
+  
+});
+const port = 5001;
 
 app.listen(port, () => `Server running on port ${port}`);

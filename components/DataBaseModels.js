@@ -11,7 +11,11 @@ class DbModel{
         this.idField=null;
         this.fields=[];
         this.values={};
+        
     
+    }
+    getModel(){
+        throw DOMException("abstract");
     }
     createJSONFromFields(vals){
         var values={};
@@ -26,22 +30,33 @@ class DbModel{
         }
         this.values=values;
     }
+    assignFieldsFromJSON(vals){
+        throw DOMException("abstract, please implement in your subclass");
+    }
     /**
      * 
      * @param {number} id Id of the object you want to get
      * @param {Function} func callback function when object is retrievd, function is passed the current object after fields have been set
      */
     getSingleByID(id,func){
+        var self=this;
         this.getQuery("SELECT * FROM "+this.tableName+" WHERE "+this.idField+" = "+id+" ;",
+        
         function (result) {
-            console.log("Result: " + result[0].firstname);
-            var obj=new DbModel();
-            for(var field in result[0]){
-                obj.values[field]=result[0][field];
-            }
+            var obj=self.createDbModel(result);
+
                 if(func !=undefined)
                     func(obj);
           });
+    }
+    createDbModel(result){
+        var values={};
+        for(var field in result[0]){
+            values[field]=result[0][field];
+        }
+        var me = this.getModel();
+        me.assignFieldsFromJSON(values);
+        return me;
     }
 
     getList(conditions,orderby,func){
@@ -54,13 +69,15 @@ class DbModel{
         }
         var where=fieldConditions.length==0?"":" WHERE "+fieldConditions.join(" AND ");
         var sql="SELECT * FROM "+this.tableName+where+" ORDER BY "+orderby.join(" , ")+";";
+        var self=this;
         this.getQuery(sql,(result)=>{
             var objs=[];
             for(var i in result){
-                var obj=new DbModel();
+                var vals={};
                 for(var field in result[i]){
-                    obj.values[field]=result[i][field];
+                    vals[field]=result[i][field];
                 }
+                var obj=self.createDbModel(vals);
                 objs.push(obj);
             }
             if(func != undefined)
@@ -125,6 +142,25 @@ class DbModel{
             console.log("Result: "+result);
                 if(func !=undefined)
                     func(result[0]);
+          });
+    }
+    getJSONList(conditions,orderby,func){
+        var cond=[];
+        for(var c in conditions){
+            if(typeof conditions[c]=="string")
+                cond.push(c+"=\""+conditions[c]+"\"");
+            else
+                cond.push(c+"="+conditions[c]);
+        }
+        var where="";
+        if(cond.length!=0){
+            where=" WHERE "+cond.join(",");
+        }
+        this.getQuery("SELECT * FROM "+this.tableName+where+" ORDER BY "+orderby.join(",")+" ;",
+        function (result) {
+            console.log("Result: "+result);
+                if(func !=undefined)
+                    func(result);
           });
     }
     /**
@@ -196,6 +232,23 @@ class Member extends DbModel{
             super.createJSONFromFields(vals);
         
     }
+    assignFieldsFromJSON(vals){
+        this.memberid=vals.memberid;
+        this.firstname=vals.firstname;
+        this.lastname=vals.lastname;
+        this.email=vals.email;
+        this.phoneNumber=vals.phoneNumber;
+        this.slackUsername=vals.slackUsername;
+        this.githubUsername=vals.githubUsername;
+        this.googleUid=vals.googleUid;
+        this.pictureUrl=vals.pictureUrl;
+        this.bannerId=vals.bannerId;
+        this.canPostAnnouncements=vals.canPostAnnouncements;
+        
+    }
+    getModel(){
+        return new Member();
+    }
 }
 class Committee extends DbModel{
     constructor(){
@@ -204,6 +257,17 @@ class Committee extends DbModel{
         this.idField="committeeId";
         this.fields=["name","description","committeeHeadId","learningChairId"];
         createJSONFromFields();
+    }
+    assignFieldsFromJSON(vals){
+        this.committeeId=vals.committeeId;
+        this.name=vals.name;
+        this.description=vals.description;
+        this.committeeHeadId=vals.committeeHeadId;
+        this.learningChairId=vals.learningChairId;
+        
+    }
+    getModel(){
+        return new Committee();
     }
 }
 class Meeting extends DbModel{
@@ -214,20 +278,117 @@ class Meeting extends DbModel{
         this.fields=["startTime","meetingType"];
         createJSONFromFields();
     }
+    assignFieldsFromJSON(vals){
+        this.meetingId=vals.meetingId;
+        this.startTime=vals.startTime;
+        this.meetingType=vals.meetingType;
+        
+        
+    }
+    getModel(){
+        return new Meeting();
+    }
 }
 class Announcement extends DbModel{
     constructor(){
         super();
-        this.tableName="announcement";
-        this.idField="announcementsId";
+        this.tableName="announcements";
+        this.idField="announcementId";
         this.fields=["title","text","postedDate","imageUrl","externalLink","committeeId","authorId"];
-        createJSONFromFields();
+        this.createJSONFromFields();
+    }
+    assignFieldsFromJSON(vals){
+        this.announcementsId=vals.announcementsId;
+        this.title=vals.title;
+        this.text=vals.text;
+        this.postedDate=vals.postedDate;
+        this.imageUrl=vals.imageUrl;
+        this.externalLink=vals.externalLink;
+        this.committeeId=vals.committeeId;
+        this.authorId=vals.authorId;
+    }
+    getModel(){
+        return new Announcement();
+    }
+
+}
+class AnnouncementV extends DbModel{
+    constructor(){
+        super();
+        this.tableName="announcement_v";
+        this.idField="announcementId";
+        this.fields=["title","text","postedDate","imageUrl","externalLink","committeeId","authorId","name","firstname"];
+        this.createJSONFromFields();
+    }
+    assignFieldsFromJSON(vals){
+        this.announcementsId=vals.announcementsId;
+        this.title=vals.title;
+        this.text=vals.text;
+        this.postedDate=vals.postedDate;
+        this.imageUrl=vals.imageUrl;
+        this.externalLink=vals.externalLink;
+        this.committeeId=vals.committeeId;
+        this.authorId=vals.authorId;
+        this.name=vals.name;
+        this.firstname=vals.firstname;
+    }
+    getModel(){
+        return new Announcement();
+    }
+
+}
+class CommitteeV extends DbModel{
+    constructor(){
+        super();
+        this.tableName="committee_v";
+        this.idField="committeeId";
+        this.fields=["name","description","headFirstName","headLastName",
+        "headEmail","learningChairFirstName","learningChairId","learningChairLastName"];
+        this.createJSONFromFields();
+    }
+    assignFieldsFromJSON(vals){
+        this.committeeId=vals.committeeId;
+        this.name=vals.name;
+        this.description=vals.description;
+        this.headFirstName=vals.headFirstName;
+        this.headLastName=vals.headLastName;
+        this.headEmail=vals.headEmail;
+        this.learningChairFirstName=vals.learningChairFirstName;
+        this.learningChairLastName=vals.learningChairLastName;
+        
+    }
+    getModel(){
+        return new Committee();
     }
 }
-//var me=new Member({firstname:"jamie",lastname:"walder",email:"walderj5@students.rowan.edu",phoneNumber:"856-500-0106",canPostAnnouncements:true});
-//me.saveToDb();
+class MemberV extends DbModel{
+    constructor(vals){
+        super();
+        this.tableName="member_v";
+        this.idField="memberid";
+        this.fields=["firstname","lastname","pictureUrl","committeeName"];
+        super.createJSONFromFields(vals);
+        
+    }
+    assignFieldsFromJSON(vals){
+        this.memberid=vals.memberid;
+        this.firstname=vals.firstname;
+        this.lastname=vals.lastname;
+        this.pictureUrl=vals.pictureUrl;
+        this.committeeName=vals.committeeName;
+        
+        
+    }
+    getModel(){
+        return new Member();
+    }
+}
+module.exports={Member:Member,Committee:Committee,Announcement:Announcement,Meeting:Meeting,CommitteeV:CommitteeV,AnnouncementV:AnnouncementV
+,MemberV:MemberV};
+/*var me=new Member({firstname:"jamie",lastname:"walder",email:"walderj5@students.rowan.edu",phoneNumber:"856-500-0106",canPostAnnouncements:true});
+me.saveToDb();*/
 /*var me=new Member().getSingleByID(18,function(member){
-    console.log(member.values.firstname);
+    console.log(member);
 }
 );*/
 /*var me=new Member().getList({firstname:"jamie"},["firstname"],(res)=>{
@@ -237,6 +398,10 @@ class Announcement extends DbModel{
         new Member(res[i].values).saveToDb();
     }
 });*/
-new Member().getJSONById(18,(res)=>{
+/*new Member().getJSONById(18,(res)=>{
     console.log(res);
-});
+});*/
+
+/*new Member().getJSONList({firstname:"tyler"},["firstname"],function(res){
+    console.log(res);
+});*/
