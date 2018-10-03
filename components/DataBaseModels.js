@@ -115,7 +115,12 @@ class DbModel{
         }
     }
     getJSONById(id,func){
-        throw DOMException("not implmented yet");
+        this.getQuery("SELECT * FROM "+this.tableName+" WHERE "+this.idField+" = "+id+" ;",
+        function (result) {
+            console.log("Result: "+result);
+                if(func !=undefined)
+                    func(result[0]);
+          });
     }
     /**
      * 
@@ -220,10 +225,13 @@ class Announcement extends DbModel{
     console.log(member.values.firstname);
 }
 );*/
-var me=new Member().getList({firstname:"jamie"},["firstname"],(res)=>{
+/*var me=new Member().getList({firstname:"jamie"},["firstname"],(res)=>{
     for(var i in res){
         console.log(res[i].values);
         res[i].values.firstname="tyler";
         new Member(res[i].values).saveToDb();
     }
+});*/
+new Member().getJSONById(18,(res)=>{
+    console.log(res);
 });
