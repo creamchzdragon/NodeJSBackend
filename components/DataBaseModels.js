@@ -156,7 +156,11 @@ class DbModel{
         if(cond.length!=0){
             where=" WHERE "+cond.join(",");
         }
-        this.getQuery("SELECT * FROM "+this.tableName+where+" ORDER BY "+orderby.join(",")+" ;",
+        var order="";
+        if(orderby.length!=0){
+            order=" ORDER BY "+orderby.join(",");
+        }
+        this.getQuery("SELECT * FROM "+this.tableName+where+order+" ;",
         function (result) {
             console.log("Result: "+result);
                 if(func !=undefined)
