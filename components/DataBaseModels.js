@@ -176,7 +176,8 @@ class DbModel{
         console.log(sql);
         con.query(sql, function(err,result){
             if(err) throw err;
-            func(result);
+			if(func!=undefined)
+				func(result);
         }
             
             /*function (err, result) {
@@ -202,6 +203,7 @@ class DbModel{
             else
                 tableValues.push("NULL");
         }
+        console.log(this.values[this.idField]);
         if(this.values[this.idField]!=undefined){
             var updatestr=[];
             for(var v in this.values){
@@ -230,10 +232,10 @@ class Member extends DbModel{
     constructor(vals){
         super();
         this.tableName="member";
-        this.idField="memberid";
+        this.idField="memberId";
         this.fields=["firstname","lastname","email","phoneNumber","slackUsername","githubUsername","googleUid",
             "pictureUrl","bannerId","canPostAnnouncements"];
-            super.createJSONFromFields(vals);
+            this.createJSONFromFields(vals);
         
     }
     assignFieldsFromJSON(vals){
@@ -260,7 +262,7 @@ class Committee extends DbModel{
         this.tableName="committee";
         this.idField="committeeId";
         this.fields=["name","description","committeeHeadId","learningChairId"];
-        createJSONFromFields();
+        this.createJSONFromFields();
     }
     assignFieldsFromJSON(vals){
         this.committeeId=vals.committeeId;
@@ -280,7 +282,7 @@ class Meeting extends DbModel{
         this.tableName="meeting";
         this.idField="meetingId";
         this.fields=["startTime","meetingType"];
-        createJSONFromFields();
+        this.createJSONFromFields();
     }
     assignFieldsFromJSON(vals){
         this.meetingId=vals.meetingId;
@@ -369,7 +371,7 @@ class MemberV extends DbModel{
     constructor(vals){
         super();
         this.tableName="member_v";
-        this.idField="memberid";
+        this.idField="memberId";
         this.fields=["firstname","lastname","pictureUrl","committeeName"];
         super.createJSONFromFields(vals);
         
