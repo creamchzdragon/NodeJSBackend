@@ -127,7 +127,9 @@ app.get("/GetFullMember/:id/:adminUid/:adminToken",function(req,res){
   });
 });
 app.get("/GetFullMembers/:adminUid/:adminToken",function(req,res){
+  
   var m=new dbModels.Member().getJSONList({googleUid:req.params.adminUid},[],function(member){
+    console.log("GetFullMembers: "+member[0].isAdmin+" "+member[0].loginToken+" "+req.params.adminToken);
     if(member[0].isAdmin&&member[0].loginToken===req.params.adminToken){
     var members=new dbModels.Member();
     members.getJSONList({},["lastname"],function(json)
