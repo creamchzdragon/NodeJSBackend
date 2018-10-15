@@ -298,7 +298,7 @@ class Meeting extends DbModel{
 class Announcement extends DbModel{
     constructor(){
         super();
-        this.tableName="announcements";
+        this.tableName="announcement";
         this.idField="announcementId";
         this.fields=["title","text","postedDate","imageUrl","externalLink","committeeId","authorId"];
         this.createJSONFromFields();
