@@ -152,8 +152,8 @@ app.get("/GetCommitteesByMember/:memberId",function(req,res){
 });
 app.get("/GetFullMember/:id/:adminUid/:adminToken",function(req,res){
   try{
-  var m=new dbModels.Member().getJSONList({googleUid:req.body.uid},[],function(member){
-    if(member[0].isAdmin&&member[0].loginToken===req.body.loginToken){
+  var m=new dbModels.Member().getJSONList({googleUid:req.params.adminUid},[],function(member){
+    if(member[0].isAdmin&&member[0].loginToken===req.params.adminToken){
         var member=new dbModels.Member();
         member.getJSONById(req.params.id,function(json){
           res.json(json);
