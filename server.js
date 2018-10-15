@@ -11,28 +11,48 @@ app.use(bodyParser.json());
 
 
 app.get('/GetAnnouncement/:id', (req, res) => {
+  try{
     var a=new dbModels.AnnouncementV();
     a.getJSONById(req.params.id,(announcment)=>{
       res.json(announcment);
     });
+  }
+  catch(e){
+    res.json(e);
+  }
 });
 app.get('/GetAnnouncements', (req, res) => {
-  var a=new dbModels.AnnouncementV();
-  a.getJSONList({},["postedDate"],(result)=>{
-    res.json(result)
-  });
+    try{
+    var a=new dbModels.AnnouncementV();
+    a.getJSONList({},["postedDate"],(result)=>{
+      res.json(result)
+    });
+  }
+  catch(e){
+    res.json(e);
+  }
 });
 app.get('/GetCommittees', (req, res) => {
-  var c=new dbModels.CommitteeV();
-  c.getJSONList({},['name'],(l)=>{
-      res.json(l);
-  });
+    try{
+    var c=new dbModels.CommitteeV();
+    c.getJSONList({},['name'],(l)=>{
+        res.json(l);
+    });
+  }
+  catch(e){
+    res.json(e);
+  }
 });
 app.get('/GetCommittee/:id',(req,res)=>{
+  try{
     var c=new dbModels.Committee();
     c.getJSONById(req.params.id,function(json){
       res.json(json);
     });
+  }
+  catch(e){
+    res.json(e);
+  }
 });
 app.get('/Hello/:name', (req, res) => {
     console.log("Hello "+req.params.name);
@@ -40,10 +60,15 @@ app.get('/Hello/:name', (req, res) => {
 });
 
 app.get('/GetCommitteeMembers/:committeeName', (req, res) => {
+  try{
         var m=new dbModels.MemberV();
         m.getJSONList({committeeName:req.params.committeeName},["lastname"],(l)=>{
           res.json(l);
         });
+      }
+      catch(e){
+        res.json(e);
+      }
   
 });
 //atler database section
@@ -65,7 +90,7 @@ app.post('/isAdmin', function(req, res) {
   res.json({isAdmin:true});
 });
 app.post('/AddEditAnouncement', function(req, res) {
-  
+  try{
   var authorToken = req.body.authorToken;
   var author=req.body.author;
   var id=req.body.id!=undefined?req.body.id:null;
@@ -107,16 +132,26 @@ app.post('/AddEditAnouncement', function(req, res) {
         res.json({err:"you do not have persmition to complete this function"});
       }
   });
+}
+catch(e){
+  res.json(e);
+}
   
 });
 app.get("/GetCommitteesByMember/:memberId",function(req,res){
+  try{
     var m=new dbModels.Member();
     m.getQuery("SELECT * FROM member_committee WHERE memberId = "+req.params.memberId,function(committees){
         res.json(committees);
     });
+  }
+  catch(e){
+    res.json(e);
+  }
   
 });
 app.get("/GetFullMember/:id/:adminUid/:adminToken",function(req,res){
+  try{
   var m=new dbModels.Member().getJSONList({googleUid:req.body.uid},[],function(member){
     if(member[0].isAdmin&&member[0].loginToken===req.body.loginToken){
         var member=new dbModels.Member();
@@ -125,9 +160,12 @@ app.get("/GetFullMember/:id/:adminUid/:adminToken",function(req,res){
         });
     }
   });
+}catch(e){
+  res.json(e);
+}
 });
 app.get("/GetFullMembers/:adminUid/:adminToken",function(req,res){
-  
+  try{
   var m=new dbModels.Member().getJSONList({googleUid:req.params.adminUid},[],function(member){
     console.log("GetFullMembers: "+member[0].isAdmin+" "+member[0].loginToken+" "+req.params.adminToken);
     if(member[0].isAdmin&&member[0].loginToken===req.params.adminToken){
@@ -138,9 +176,13 @@ app.get("/GetFullMembers/:adminUid/:adminToken",function(req,res){
     });
   }
 });
+  }
+  catch(e){
+    res.json(e);
+  }
 });
 app.post('/AddEditCommittee',function(req,res){
- 
+ try{
   var m=new dbModels.Member().getJSONList({googleUid:req.body.author},[],function(member){
     
     if(member[0]!=undefined&&member[0].isAdmin&&member[0].loginToken===req.body.authorToken){
@@ -160,9 +202,14 @@ app.post('/AddEditCommittee',function(req,res){
   }
 }
   );
+}
+catch(e){
+  res.json(e);
+}
 });
 
 app.post('/AddEditMember', function(req, res) {
+  try{
   var m=new dbModels.Member().getJSONList({googleUid:req.body.author},[],function(member){
     
     if(member[0]!=undefined&&member[0].isAdmin&&member[0].loginToken===req.body.authorToken){
@@ -211,9 +258,14 @@ app.post('/AddEditMember', function(req, res) {
     else{
       res.json({err:"you do not have persmition to complete this function"});
     }
-})});
+})
+  }catch(e){
+    res.json(e);
+  }
+});
 
 app.post('/SignIn',function(req,res){
+  try{
   console.log(req.body);
   var body=req.body;
   var member=new dbModels.Member();
@@ -242,6 +294,10 @@ app.post('/SignIn',function(req,res){
       res.json({isAdmin:false});
     }
   });
+}
+catch(e){
+  res.json(e);
+}
 });
 const port = 5002;
 
