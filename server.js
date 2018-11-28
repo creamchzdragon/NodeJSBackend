@@ -152,6 +152,7 @@ app.get("/GetCommitteesByMember/:memberId",function(req,res){
 });
 app.get("/GetFullMember/:id/:adminUid/:adminToken",function(req,res){
   try{
+    
   var m=new dbModels.Member().getJSONList({googleUid:req.params.adminUid},[],function(member){
     if(member[0].isAdmin&&member[0].loginToken===req.params.adminToken){
         var member=new dbModels.Member();
@@ -210,9 +211,9 @@ catch(e){
 
 app.post('/AddEditMember', function(req, res) {
   try{
-  var m=new dbModels.Member().getJSONList({googleUid:req.body.author},[],function(member){
     
-    if(member[0]!=undefined&&member[0].isAdmin&&member[0].loginToken===req.body.authorToken){
+  var m=new dbModels.Member().getJSONList({googleUid:req.body.googleUid},[],function(member){
+    if(member[0]!=undefined&&member[0].isAdmin&&member[0].loginToken===req.body.adminToken){
     var b=req.body;
     
     var a=new dbModels.Member();
@@ -244,7 +245,7 @@ app.post('/AddEditMember', function(req, res) {
     });
 
       a.saveToDb(function(result){
-
+        console.log("Saved");
         res.json({code:200});
       });
       var sql="DELETE FROM member_committee WHERE memberId = "+b.memberId+";";
@@ -257,6 +258,7 @@ app.post('/AddEditMember', function(req, res) {
     }
     else{
       res.json({err:"you do not have persmition to complete this function"});
+      console.log("err you do not have permission to edit this person");
     }
 })
   }catch(e){
@@ -298,6 +300,86 @@ app.post('/SignIn',function(req,res){
 catch(e){
   res.json(e);
 }
+});
+app.get('/GetSelf/:uid/:accessToken',function(req,res){
+    new dbModels.Member().getJSONList({googleUid:req.params.uid},[],function(result){
+      if(result!=undefined&&result!=null&&result[0]!=null&&result[0].loginToken===req.params.accessToken){
+        var m=new dbModels.Member();
+        m.getQuery("SELECT * FROM member_committee WHERE memberId = "+result[0].memberId,function(committees){
+          var joined=[];
+          for(var i in committees){
+            joined.push(committees[i].committeeId);
+          }
+          result[0].joinedCommittees=joined;
+          res.json(result[0]);
+        });
+        
+      }
+      else{
+        res.json({err:"user does not exist"});
+      }
+    });
+}
+);
+app.post('/SaveSelf', function(req, res) {
+  try{
+    console.log(req.body);
+  var m=new dbModels.Member().getJSONList({googleUid:req.body.googleUid},[],function(member){
+    console.log(req.body.authorToken);
+    if(member[0]!=undefined&&member[0].loginToken===req.body.adminToken){
+    var b=req.body;
+    
+    var a=new dbModels.Member();
+    a.values={
+      memberId:b.memberId!=null?b.memberId:null,
+      firstname:b.firstname,
+      lastname:b.lastname,
+      email:b.email,
+      phoneNumber:b.phoneNumber,
+      slackUsername:b.slackUsername,
+      githubUsername:b.githubUsername,
+      googleUid:b.googleUid,
+      bio:b.bio,
+      pictureUrl:b.pictureUrl,
+      bannerId:b.bannerId,
+      isAdmin:b.isAdmin
+};
+    a.assignFieldsFromJSON({
+      memberId:b.memberId!=null?b.memberId:null,
+      firstname:b.firstname,
+      lastname:b.lastname,
+      email:b.email,
+      phoneNumber:b.phoneNumber,
+      slackUsername:b.slackUsername,
+      githubUsername:b.githubUsername,
+      googleUid:b.googleUid,
+      bio:b.bio,
+      pictureUrl:b.pictureUrl,
+      bannerId:b.bannerId,
+      isAdmin:b.isAdmin
+    });
+
+      a.saveToDb(function(result){
+        console.log("Saved");
+        res.json({code:200});
+      });
+      var sql="DELETE FROM member_committee WHERE memberId = "+b.memberId+";";
+      a.getQuery(sql);
+      console.log(b.joinedCommittees);
+      for(var c in b.joinedCommittees){
+        sql="INSERT INTO member_committee (memberId,committeeId) VALUES ("+b.memberId+","+b.joinedCommittees[c]+");"
+        a.getQuery(sql);
+      }
+      
+    }
+    else{
+      res.json({err:"you do not have persmition to complete this function"});
+      console.log("err you do not have permission to edit this person");
+    }
+})
+  }catch(e){
+    res.json(e);
+  }
 });
 const port = 5002;
 
